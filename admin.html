@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Admin - Quiz Results</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<h2>Admin Panel – Quiz Results</h2>
+
+<table border="1" cellpadding="10" cellspacing="0">
+  <thead>
+    <tr>
+      <th>S.No</th>
+      <th>Name</th>
+      <th>Roll Number</th>
+      <th>Score</th>
+    </tr>
+  </thead>
+  <tbody id="resultTable">
+  </tbody>
+</table>
+
+<br>
+<button onclick="clearData()">Clear All Results</button>
+
+<script>
+let results = JSON.parse(localStorage.getItem("results")) || [];
+let table = document.getElementById("resultTable");
+
+results.forEach((r, i) => {
+  let row = `
+    <tr>
+      <td>${i + 1}</td>
+      <td>${r.name}</td>
+      <td>${r.roll}</td>
+      <td>${r.score}</td>
+    </tr>
+  `;
+  table.innerHTML += row;
+});
+
+function clearData() {
+  if (confirm("Are you sure?")) {
+    localStorage.removeItem("results");
+    location.reload();
+  }
+}
+</script>
+
+</body>
+</html>

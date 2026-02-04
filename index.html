@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premium Web Editor</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto&family=Open+Sans&family=Lato&family=Montserrat&family=Poppins&family=Raleway&family=Playfair+Display&family=Merriweather&family=Oswald&family=Source+Code+Pro&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary: #0077ff;
+            --bg: #ffffff;
+            --text: #000000;
+            --card: #f4f4f4;
+            --radius: 20px;
+            --gold: #d4af37;
+            --menu-bg: linear-gradient(180deg, #111, #1c1c1c);
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Roboto', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            transition: background 0.5s cubic-bezier(0.4, 0, 0.2, 1), color 0.3s ease;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        body.dark {
+            --bg: #121212;
+            --text: #eeeeee;
+            --card: #1f1f1f;
+        }
+
+        /* --- ANIMATIONS --- */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+
+        @keyframes pulseGold {
+            0% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.4); }
+            70% { box-shadow: 0 0 0 15px rgba(212, 175, 55, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0); }
+        }
+
+        /* SPLASH SCREEN */
+        #splash {
+            position: fixed;
+            inset: 0;
+            background: #000;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            transition: 0.5s ease-out;
+        }
+        .splash-content { text-align: center; animation: fadeInUp 1s ease; }
+        .splash-content img { width: 200px; height: auto; margin-bottom: 20px; filter: drop-shadow(0 0 10px white); }
+
+        /* HEADER */
+        header {
+            background: var(--primary);
+            color: white;
+            padding: 14px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transition: background 0.3s ease;
+        }
+        .menu-icon { font-size: 28px; cursor: pointer; transition: transform 0.3s ease; }
+        .menu-icon:hover { transform: rotate(90deg); }
+
+        /* SIDE MENU */
+        .side-menu {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 260px;
+            height: 100%;
+            background: var(--menu-bg);
+            padding: 20px;
+            transform: translateX(100%);
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 1000;
+            display: none;
+        }
+        .side-menu.show { display: block; transform: translateX(0); }
+        .close-btn { text-align: right; font-size: 22px; cursor: pointer; color: #ccc; transition: color 0.3s; }
+        .close-btn:hover { color: white; }
+
+        .menu-item {
+            display: block;
+            margin: 15px 0;
+            padding: 12px 16px;
+            background: #2a2a2a;
+            border-radius: 8px;
+            border-left: 4px solid transparent;
+            color: #ffffff !important;
+            text-decoration: none;
+            font-size: 17px;
+            transition: all 0.3s ease;
+        }
+        .menu-item:hover { background: #333; padding-left: 25px; border-left-color: var(--primary); }
+        .menu-item.quiz { border-left-color: #00c853; }
+        .menu-item.admin { border-left-color: #ff5252; }
+
+        .seen-shoutout {
+            margin-top: 40px;
+            color: white;
+            font-size: 32px;
+            font-weight: 900;
+            text-align: center;
+            animation: float 3s infinite ease-in-out;
+        }
+
+        /* MAIN CONTAINER */
+        .container { max-width: 1200px; margin: auto; padding: 20px; }
+
+        .controls {
+            background: var(--card);
+            padding: 25px;
+            border-radius: var(--radius);
+            margin-bottom: 30px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            border: 1px solid rgba(128,128,128,0.1);
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        .control-item { display: flex; flex-direction: column; transition: transform 0.3s ease; }
+        .control-item:hover { transform: translateY(-3px); }
+        label { margin-bottom: 8px; font-weight: bold; font-size: 14px; opacity: 0.8; }
+
+        select, input {
+            padding: 12px;
+            border-radius: 10px;
+            border: 1px solid rgba(128,128,128,0.3);
+            background: var(--bg);
+            color: var(--text);
+            outline: none;
+            transition: all 0.3s ease;
+        }
+        select:focus, input:focus { border-color: var(--primary); box-shadow: 0 0 8px rgba(0,119,255,0.2); }
+
+        /* IMAGE BOX & PREVIEW CARD */
+        .image-box {
+            width: 220px;
+            height: 220px;
+            margin: 0 auto 15px;
+            border: 3px solid var(--gold);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            position: relative;
+            background: var(--card);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            animation: float 4s infinite ease-in-out;
+        }
+        .image-box:hover { transform: scale(1.05); animation: pulseGold 2s infinite; }
+        .image-box img { width: 100%; height: 100%; object-fit: cover; border-radius: 11px; }
+
+        .preview {
+            background: var(--card);
+            padding: 40px 20px;
+            border-radius: var(--radius);
+            text-align: center;
+            transition: all 0.5s ease;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            animation: fadeInUp 1s ease-out;
+        }
+
+        button { 
+            padding: 12px 24px; 
+            background: var(--primary); 
+            color: white; 
+            border: none; 
+            border-radius: 8px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            transition: all 0.3s ease;
+        }
+        button:hover { transform: scale(1.05); filter: brightness(1.1); box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+        button:active { transform: scale(0.95); }
+
+        footer { text-align: center; padding: 20px; background: var(--primary); color: white; margin-top: 40px; transition: background 0.3s; }
+
+        #mainContent { display: none; }
+
+        @media (max-width: 600px) {
+            .image-box { width: 180px; height: 180px; }
+            header h2 { font-size: 16px; }
+        }
+    </style>
+</head>
+
+<body class="light">
+
+<div id="splash">
+    <div class="splash-content">
+        <img src="image-removebg-preview (1).png" alt="Welcome">
+        <h1>Vanakam da mapla 👋</h1>
+        <h3>CAHCET la irundhu…</h3>
+        <button onclick="enterSite()">Enter Website</button>
+        <p style="margin-top:20px; font-size: 12px; opacity: 0.6;">A Site By Gokss..</p>
+    </div>
+</div>
+
+<div id="mainContent">
+    <header>
+        <h2>Web Editor ---- WEB ESENTIALS</h2>
+        <div id="menuIcon" class="menu-icon" onclick="toggleMenu()">☰</div>
+    </header>
+
+    <div class="side-menu" id="sideMenu">
+        <div class="close-btn" onclick="toggleMenu()">✖</div>
+        <a href="#" class="menu-item" onclick="toggleMenu()">Home</a>
+        <a href="quiz.html" class="menu-item quiz" onclick="toggleMenu()">Start Quiz</a>
+        <a href="#" id="adminLink" class="menu-item admin" style="display:none;" onclick="openAdmin()">Admin Portal</a>
+        <div class="seen-shoutout">" SEEN ? "</div>
+    </div>
+
+    <div class="container">
+        <section class="controls">
+            <div class="control-item">
+                <label>Theme Mode</label>
+                <select onchange="changeTheme(this.value)">
+                    <option value="light">☀️ Light Mode</option>
+                    <option value="dark">🌙 Dark Mode</option>
+                </select>
+            </div>
+
+            <div class="control-item">
+                <label>Menu Icon Style</label>
+                <select onchange="changeMenuIcon(this.value)">
+                    <option value="☰">☰ Hamburger</option>
+                    <option value="⋮">⋮ Vertical Dots</option>
+                    <option value="▦">▦ Grid</option>
+                    <option value="✚">✚ Plus</option>
+                    <option value="MENU">TEXT (MENU)</option>
+                </select>
+            </div>
+
+            <div class="control-item">
+                <label>Font Typography</label>
+                <select onchange="changeFont(this.value)">
+                    <option value="poppins">Poppins</option>
+                    <option value="roboto">Roboto</option>
+                    <option value="playfair">Playfair Display</option>
+                    <option value="montserrat">Montserrat</option>
+                    <option value="oswald">Oswald</option>
+                    <option value="lato">Lato</option>
+                </select>
+            </div>
+
+            <div class="control-item">
+                <label>Primary Brand Color</label>
+                <input type="color" value="#0077ff" onchange="changePrimaryColor(this.value)">
+            </div>
+
+            <div class="control-item">
+                <label>Card & Image Box Color</label>
+                <input type="color" id="cardColorPicker" value="#f4f4f4" oninput="changeCardColor(this.value)">
+            </div>
+
+            <div class="control-item">
+                <label>Letter Spacing (px)</label>
+                <input type="number" id="letterSpacingInput" value="0" step="0.5" oninput="liveUpdateSpacing()">
+            </div>
+
+            <div class="control-item">
+                <label>Line Spacing (Height)</label>
+                <input type="number" id="lineHeightInput" value="1.6" step="0.1" oninput="liveUpdateSpacing()">
+            </div>
+
+            <div class="control-item" style="justify-content: flex-end;">
+                <button onclick="adminLogin()">Admin Access</button>
+            </div>
+        </section>
+
+        <section id="previewCard" class="preview">
+            <input type="file" id="imageInput" accept="image/*" style="display:none" onchange="loadImage(event)">
+            <div class="image-box" id="imgBox" onclick="triggerImageInput()">
+                <span id="imageText" style="opacity: 0.5;">SELECT IMAGE</span>
+                <img id="previewImage" style="display:none;">
+            </div>
+            <h1 style="margin-top: 20px;">Live Preview Card</h1>
+            <p id="previewText">Colors, fonts, and spacing update instantly. Experience high-end web customization.</p>
+            <br>
+            <button onclick="resetSite()" style="background: #555;">Reset to Default</button>
+        </section>
+    </div>
+
+    <footer>© 2026 Goks Web Editor(copy rights na enaga iiya...)</footer>
+</div>
+
+<script>
+    const body = document.body;
+    const menu = document.getElementById("sideMenu");
+    const menuIcon = document.getElementById("menuIcon");
+    const img = document.getElementById("previewImage");
+    const imgText = document.getElementById("imageText");
+    const imgInput = document.getElementById("imageInput");
+
+    function enterSite() {
+        const splash = document.getElementById("splash");
+        splash.style.opacity = "0";
+        splash.style.transform = "scale(1.1)";
+        setTimeout(() => {
+            splash.style.display = "none";
+            document.getElementById("mainContent").style.display = "block";
+        }, 500);
+    }
+
+    function toggleMenu() { menu.classList.toggle("show"); }
+    function changeMenuIcon(icon) { menuIcon.innerText = icon; }
+    function changeTheme(mode) { body.className = mode; }
+    
+    function liveUpdateSpacing() {
+        body.style.letterSpacing = document.getElementById("letterSpacingInput").value + "px";
+        body.style.lineHeight = document.getElementById("lineHeightInput").value;
+    }
+
+    function changeFont(f) {
+        const fonts = {
+            poppins: "'Poppins', sans-serif",
+            roboto: "'Roboto', sans-serif",
+            playfair: "'Playfair Display', serif",
+            montserrat: "'Montserrat', sans-serif",
+            oswald: "'Oswald', sans-serif",
+            lato: "'Lato', sans-serif"
+        };
+        body.style.fontFamily = fonts[f];
+    }
+
+    function changePrimaryColor(color) {
+        document.documentElement.style.setProperty("--primary", color);
+    }
+
+    function changeCardColor(color) {
+        document.documentElement.style.setProperty("--card", color);
+    }
+
+    function triggerImageInput() { imgInput.click(); }
+
+    function loadImage(e) {
+        const file = e.target.files[0];
+        if (file) {
+            img.src = URL.createObjectURL(file);
+            img.style.display = "block";
+            imgText.style.display = "none";
+        }
+    }
+
+    function adminLogin() {
+        const pass = prompt("Admin Password:");
+        if (pass === "admin123") {
+            localStorage.setItem("isAdmin", "true");
+            document.getElementById("adminLink").style.display = "block";
+            alert("Admin Mode On!");
+        } else {
+            alert("ethulam namba kudubathuku thevaya gobi🤦");
+        }
+    }
+
+    function openAdmin() {
+        if (localStorage.getItem("isAdmin") === "true") {
+            window.open("https://docs.google.com/spreadsheets/d/1rQ04oqqVYxvXKliQTNRqjP-a5FHf_lXOVmBh0oYWATM/edit");
+        }
+    }
+
+    function resetSite() {
+        body.className = "light";
+        body.style.letterSpacing = "0px";
+        body.style.lineHeight = "1.6";
+        document.getElementById("letterSpacingInput").value = 0;
+        document.getElementById("lineHeightInput").value = 1.6;
+        changeCardColor("#f4f4f4");
+        changePrimaryColor("#0077ff");
+        img.style.display = "none";
+        imgText.style.display = "block";
+        localStorage.removeItem("isAdmin");
+        document.getElementById("adminLink").style.display = "none";
+    }
+
+    window.onload = () => {
+        if (localStorage.getItem("isAdmin") === "true") {
+            document.getElementById("adminLink").style.display = "block";
+        }
+    };
+</script>
+
+</body>
+</html>

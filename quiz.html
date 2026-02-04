@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Advanced Web Quiz</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #eef2f5; padding: 10px; overflow-x: hidden; }
+        .container { max-width: 600px; background: #fff; padding: 25px; margin: 30px auto; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; position: relative; z-index: 10; }
+        
+        input, button, textarea, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
+        
+        /* Main Button Style */
+        button { background: #0077ff; color: #fff; border: none; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        button:hover { background: #0056b3; }
+
+        /* Disabled Button Style (Gray) */
+        button:disabled { background: #cccccc; cursor: not-allowed; transform: none; }
+        
+        #loginError { color: #d93025; font-size: 0.85em; margin: 10px 0; font-weight: bold; min-height: 1.2em; text-align: center; }
+        .hidden { display: none; }
+
+        /* Animations */
+        #timerDisplay { font-size: 22px; color: #d93025; font-weight: bold; margin-bottom: 15px; animation: pulse 1s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+        
+        #question { font-weight: bold; font-size: 1.2em; color: #333; animation: fadeIn 0.5s; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        label { display: block; padding: 12px; background: #f9f9f9; margin-bottom: 8px; border-radius: 8px; cursor: pointer; text-align: left; border: 1px solid #eee; animation: slideIn 0.4s ease-out; }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
+        label:hover { background: #f0f7ff; border-color: #0077ff; }
+
+        .emoji { position: fixed; font-size: 2.5rem; pointer-events: none; z-index: 1; animation: moveRandom 12s linear infinite; opacity: 0.6; }
+        @keyframes moveRandom { 
+            0% { transform: translate(0,0) rotate(0deg); } 
+            50% { transform: translate(20vw, 40vh) rotate(180deg); } 
+            100% { transform: translate(0,0) rotate(360deg); } 
+        }
+
+        .loading-img { width: 150px; height: auto; margin-bottom: 15px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="login">
+        <h2>Nambi Vanga santhosama ponga🙏(Quiz Login)</h2>
+        <input type="number" id="roll" placeholder="Roll Number" oninput="validateRoll()">
+        <input type="text" id="name" placeholder="Name" oninput="validateName()">
+        <input type="date" id="dob" oninput="validateDOB()">
+        <div id="loginError"></div>
+        <button onclick="login()">🗺️vanga nambargale ellame onna polam...🎒</button>
+    </div>
+
+    <div id="quiz" class="hidden">
+        <div id="timerDisplay">Time Left: 12s</div>
+        <h3 id="qno"></h3>
+        <p id="question"></p>
+        <div id="options"></div>
+        <button onclick="next()">தொடரும்🪷</button>
+    </div>
+
+    <div id="feedback" class="hidden">
+        <h2 id="feedbackHeader">Ungal sevai yanaku thevai(Feedback)</h2>
+        <p id="cheatWarning" style="color:red; display:none; font-weight:bold;">⚠️Onnum Solrathuku Illa.. (DISQUALIFIED FOR TAB SWITCHING)</p>
+        
+        <select id="siteFb" oninput="checkFeedback()">
+            <option value="">Rate the Website</option>
+            <option value="5">5 - nov mass na ne..(Excellent)</option><option value="4">4 -nala than iruku(good)</option>
+            <option value="3">3 - paravala(Average)</option><option value="2">2 -solara alavuku onnum illa(Fair)</option><option value="1">1 - chapa matter hu salt water hu (bad)</option>
+        </select>
+        <textarea id="qFb" placeholder="manasula pathatha soluga.." oninput="checkFeedback()"></textarea>
+        <textarea id="comment" placeholder="nega solvathu ellam unmai unmaiya thaivara vera onnum illa.." oninput="checkFeedback()"></textarea>
+        
+        <button id="finishBtn" onclick="submitAll()" disabled>Avlothan...(finish)</button>
+    </div>
+
+    <div id="loading" class="hidden">
+        <img src="image-removebg-preview (2).png" alt="Loading..." class="loading-img"><h2>அமைதி அமைதி அமைதியோ அமைதி🤫"</h2>
+        <h2>Calculating Result...</h2>
+        <h1 id="countdown" style="font-size: 80px; color: #0077ff;">3</h1>
+    </div>
+
+    <div id="result" class="hidden">
+        <h2>namba than yapavume namba than!!🤣(Completed Successfully)</h2>
+        <div id="res" style="font-size: 1.8em; margin: 20px 0;"></div>
+        <p> super ji..</p>
+    </div>
+</div>
+
+<script>
+const URL = "https://script.google.com/macros/s/AKfycbwUkLS2vVleF56siiXx9Q_RX33-7DmXvewJkwNOn4ctY4xnS-XHGARmKkKWXHK3zhON/exec";
+
+const students = {
+    "24501":"AADHAM SHARIFF H","24502":"ABDUL NAEEM","24503":"ABDUL RAHEEM I",
+    "24504":"ABISHAK K","24505":"AFFAN BASHA A","24506":"ALMIRA ZAINAB N",
+    "24507":"ANGLE PRIYA","24508":"ASIF RIHAN A","24509":"ATHAHAR A",
+    "24510":"AYSHA PARVEEN","24511":"AYESHA SIDDIKA","24512":"BUVANA",
+    "24513":"DEEPAK RAJ KANNAN S","24514":"DEEPTHIKA K","24515":"DHARSHINI",
+    "24516":"DHILIP B","24517":"DHILIP K","24518":"DHIVYA BHARATHI",
+    "24519":"DK","24520":"GOKUL","24521":"GOPALA KRISHNAN S",
+    "24522":"GOPIKA","24523":"HARINI","24524":"JA MU KA",
+    "24525":"JAISURYA D","24526":"JAYAKABELESH K","24527":"KABILAN V",
+    "24528":"KARTHI A","24529":"LATHIKA","24530":"LEENA",
+    "24531":"LIKITHA SOWJANIYA","24532":"LUBNA PARVEEN","24533":"MANJU",
+    "24534":"MUNCH","24535":"MOAHAMED TUFAIL D","24536":"MOHAMMAD SAALIM",
+    "24537":"MOHAMMED AFHAAN N","24538":"MOHAMMED AAYMAN A",
+    "24539":"MOHAMMED IBRAHIM M","24540":"MOHAMMED IBRAHIM M",
+    "24541":"KHUZAIMA MOHAMMED","24542":"MOHAMMED MUBARAK N",
+    "24543":"MUSSAWIR MOHAMMED"
+};
+
+const nameToRoll = {};
+for (let key in students) { nameToRoll[students[key].toUpperCase()] = key; }
+
+let rawQuiz = [
+    {q:"Which attribute is used to group multiple <input> options so only one can be selected?", o:["id", "class", "name", "value"], a:"name"},
+    {q:"Link to open email app in href?", o:["mail:info@site.com", "mailto:info@site.com", "email:info@site.com", "send:info@site.com"], a:"mailto:info@site.com"},
+    {q:"Property to make a list show squares instead of bullets?", o:["list-style-type: square;", "list-type: square;", "bullet: square;", "list-style: block;"], a:"list-style-type: square;"},
+    {q:"How to select only <p> elements inside a <div>?", o:["div.p", "div p", "div + p", "div > p"], a:"div p"},
+    {q:"Property controlling space between lines of text?", o:["letter-spacing", "line-height", "text-indent", "word-spacing"], a:"line-height"},
+    {q:"Property to stop background image repeat?", o:["background-fill: none;", "background-repeat: no-repeat;", "background-style: fixed;", "background-image: static;"], a:"background-repeat: no-repeat;"},
+    {q:"Navigation links side-by-side: .nav-item { display: _____; }", o:["block", "inline", "hidden", "static"], a:"inline"},
+    {q:"Specificity: button{color:red} .btn-primary{color:blue} - What color is <button class='btn-primary'>?", o:["Red", "Blue", "Black", "Transparent"], a:"Blue"},
+    {q:"Height calculation: height:100px, padding-v:10px, margin-top:20px. Total height?", o:["100px", "120px", "140px", "110px"], a:"140px"},
+    {q:"Identify error: <a href='index.html' Back to Home </a>", o:["href should be src", "Missing closing > in opening tag", "Text should be in quotes", "File must be capitalized"], a:"Missing closing > in opening tag"},
+    {q:"Center vertically in flexbox: justify-content: center; _______: center;", o:["align-content", "align-items", "vertical-align", "text-align"], a:"align-items"},
+    {q:"Which HTML attribute is used to prevent a form from being submitted if a specific input field is empty?", o:["validate", "important", "required", "needed"], a:"required"},
+    {q:"In CSS, which property value is used to make text appear 'extra bold'?", o:["font-weight: 700;", "font-weight: boldest;", "text-style: heavy;", "font-size: bold;"], a:"font-weight: 700;"},
+    {q:"When linking an external CSS file, which attribute inside the <link> tag specifies the relationship to the document?", o:["type='text/css'", "rel='stylesheet'", "href='style.css'", "link='external'"], a:"rel='stylesheet'"},
+    {q:"Which CSS pseudo-class is used to change the style of a button when a user moves their mouse over it?", o:[":active", ":focus", ":hover", ":visited"], a:":hover"}
+];
+
+let i = 0, score = 0, roll, name, dob, qTimer, timeLeft = 12, tabWarnings = 0, isQuizActive = false;
+
+// VALIDATION FUNCTIONS
+function validateRoll() {
+    const r = document.getElementById("roll").value;
+    const n = document.getElementById("name");
+    const e = document.getElementById("loginError");
+    if(r.length > 0 && r.length < 5) { e.innerText = "⚠️ Enter the correct number (5 digits)"; n.value = ""; }
+    else if(students[r]) { e.innerText = "✅  ahh vazhthukkal vazhthukkal🤝(Roll Number Verified)"; n.value = students[r]; }
+    else if(r.length >= 5) { e.innerText = "❌  ne than da driver hu 🫡(Roll Number not found)"; n.value = ""; }
+    else e.innerText = "";
+}
+
+function validateName() {
+    const val = document.getElementById("name").value.toUpperCase();
+    const r = document.getElementById("roll");
+    const e = document.getElementById("loginError");
+    if(nameToRoll[val]) { e.innerText = "✅ dai..evan da.. Name Found"; r.value = nameToRoll[val]; }
+    else { e.innerText = "❌seathuru...🤡 Name not found"; r.value = ""; }
+}
+
+function validateDOB() {
+    const d = document.getElementById("dob").value;
+    const e = document.getElementById("loginError");
+    if(!d) return;
+    const yr = new Date(d).getFullYear();
+    if(yr < 2004 || yr > 2008) e.innerText = "❌ ne lam porathathe oru saaba kedu...🤦(enter the valid DOB)";
+    else e.innerText = "✅ ohh my god!! 😱 DOB Valid";
+}
+
+// CHECK FEEDBACK PROGRESS
+function checkFeedback() {
+    const sFb = document.getElementById("siteFb").value;
+    const qFb = document.getElementById("qFb").value.trim();
+    const comm = document.getElementById("comment").value.trim();
+    const btn = document.getElementById("finishBtn");
+
+    // Enable button only if all 3 fields are filled
+    if (sFb !== "" && qFb !== "" && comm !== "") {
+        btn.disabled = false;
+    } else {
+        btn.disabled = true;
+    }
+}
+
+// ANTI-CHEAT
+document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === 'hidden' && isQuizActive) {
+        tabWarnings++;
+        if (tabWarnings === 1) alert("⚠️ WARNING (1/2): Don't leave the tab! Next time the quiz will end.");
+        else if (tabWarnings === 2) alert("⚠️ WARNING (2/2): FINAL warning. One more switch and you DISQUALIFY.");
+        else if (tabWarnings > 2) { 
+            alert("❌ DISQUALIFIED: Redirecting to feedback.");
+            forceEndQuiz();
+        }
+    }
+});
+
+function forceEndQuiz() {
+    clearInterval(qTimer);
+    isQuizActive = false;
+    document.getElementById("quiz").classList.add("hidden");
+    document.getElementById("feedback").classList.remove("hidden");
+    document.getElementById("cheatWarning").style.display = "block";
+    document.getElementById("feedbackHeader").innerText = "Quiz Terminated";
+}
+
+function login() {
+    roll = document.getElementById("roll").value;
+    name = document.getElementById("name").value;
+    dob = document.getElementById("dob").value;
+    if(!students[roll] || !dob) return alert("Check your details!");
+    const yr = new Date(dob).getFullYear();
+    if(yr < 2004 || yr > 2008) return;
+
+    rawQuiz.sort(() => Math.random() - 0.5);
+    rawQuiz.forEach(q => q.o.sort(() => Math.random() - 0.5));
+
+    document.getElementById("login").classList.add("hidden");
+    document.getElementById("quiz").classList.remove("hidden");
+    isQuizActive = true;
+    load();
+}
+
+function load() {
+    clearInterval(qTimer); timeLeft = 12;
+    updateTimer();
+    let q = rawQuiz[i];
+    document.getElementById("qno").innerText = `Question ${i+1} / ${rawQuiz.length}`;
+    document.getElementById("question").innerText = q.q;
+    document.getElementById("options").innerHTML = q.o.map(x => `<label><input type="radio" name="opt" value="${x}"> ${x}</label>`).join("");
+    
+    qTimer = setInterval(() => {
+        timeLeft--; updateTimer();
+        if(timeLeft <= 0) next();
+    }, 1000);
+}
+
+function updateTimer() { document.getElementById("timerDisplay").innerText = `Time Left: ${timeLeft}s`; }
+
+function next() {
+    let sel = document.querySelector("input[name=opt]:checked");
+    if(sel && sel.value === rawQuiz[i].a) score++;
+    i++;
+    if(i < rawQuiz.length) load();
+    else { 
+        clearInterval(qTimer); isQuizActive = false;
+        document.getElementById("quiz").classList.add("hidden");
+        document.getElementById("feedback").classList.remove("hidden");
+    }
+}
+
+function submitAll() {
+    const sFb = document.getElementById("siteFb").value;
+    const qFb = document.getElementById("qFb").value;
+    const comm = document.getElementById("comment").value;
+
+    fetch(URL, { method:"POST", mode:"no-cors", body: JSON.stringify({roll, name, dob, score, siteFeedback:sFb, questionFeedback:qFb, comment:comm, cheated: (tabWarnings > 2)}) });
+
+    document.getElementById("feedback").classList.add("hidden");
+    document.getElementById("loading").classList.remove("hidden");
+    
+    let lt = 3;
+    const li = setInterval(() => {
+        lt--; document.getElementById("countdown").innerText = lt;
+        if(lt <= 0) { clearInterval(li); showResult(); }
+    }, 1000);
+}
+
+function showResult() {
+    document.getElementById("loading").classList.add("hidden");
+    document.getElementById("result").classList.remove("hidden");
+    let color = (tabWarnings > 2) ? "#d93025" : (score >= 13 ? "#1e8e3e" : (score >= 8 ? "#f29900" : "#d93025"));
+    let emojis = (tabWarnings > 2) ? ["🚫", "❌"] : (score >= 13 ? ["🏆", "🔥", "👑"] : (score >= 8 ? ["👍", "😊", "✨"] : ["😢", "❌"]));
+    
+    const r = document.getElementById("res");
+    r.style.color = color;
+    r.innerHTML = `<strong>${name}</strong><br>${(tabWarnings > 2) ? 'DISQUALIFIED' : 'Score: ' + score + ' / ' + rawQuiz.length}`;
+    
+    for(let j=0; j<rawQuiz.length; j++) {
+        const e = document.createElement("div");
+        e.className = "emoji";
+        e.innerText = emojis[Math.floor(Math.random() * emojis.length)];
+        e.style.left = Math.random()*90+"vw"; e.style.top = Math.random()*90+"vh";
+        e.style.animationDelay = (Math.random()*5)+"s";
+        document.body.appendChild(e);
+    }
+}
+</script>
+</body>
+</html>
