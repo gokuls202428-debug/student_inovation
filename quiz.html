@@ -10,10 +10,11 @@
         
         input, button, textarea, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
         
+        /* New style for the DOB label */
+        .dob-label { display: block; text-align: left; font-weight: bold; margin-top: 10px; margin-left: 5px; color: #333; }
+
         button { background: #0077ff; color: #fff; border: none; cursor: pointer; font-weight: bold; transition: 0.3s; }
         button:hover:not(:disabled) { background: #0056b3; }
-
-        /* Disabled Button Style (Gray) */
         button:disabled { background: #cccccc; cursor: not-allowed; transform: none; opacity: 0.6; }
         
         #loginError { color: #d93025; font-size: 0.85em; margin: 10px 0; font-weight: bold; min-height: 1.2em; text-align: center; }
@@ -25,9 +26,9 @@
         #question { font-weight: bold; font-size: 1.2em; color: #333; animation: fadeIn 0.5s; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
         
-        label { display: block; padding: 12px; background: #f9f9f9; margin-bottom: 8px; border-radius: 8px; cursor: pointer; text-align: left; border: 1px solid #eee; animation: slideIn 0.4s ease-out; }
+        label.option-label { display: block; padding: 12px; background: #f9f9f9; margin-bottom: 8px; border-radius: 8px; cursor: pointer; text-align: left; border: 1px solid #eee; animation: slideIn 0.4s ease-out; }
         @keyframes slideIn { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
-        label:hover { background: #f0f7ff; border-color: #0077ff; }
+        label.option-label:hover { background: #f0f7ff; border-color: #0077ff; }
 
         .emoji { position: fixed; font-size: 2.5rem; pointer-events: none; z-index: 1; animation: moveRandom 12s linear infinite; opacity: 0.6; }
         @keyframes moveRandom { 
@@ -46,7 +47,10 @@
         <h2>Nambi Vanga santhosama ponga🙏(Quiz Login)</h2>
         <input type="number" id="roll" placeholder="Roll Number" oninput="validateRoll()">
         <input type="text" id="name" placeholder="Name" oninput="validateName()">
+        
+        <label for="dob" class="dob-label">Date of Birth (DOB):</label>
         <input type="date" id="dob" oninput="validateDOB()">
+        
         <div id="loginError"></div>
         <button onclick="login()">🗺️vanga nambargale ellame onna polam...🎒</button>
     </div>
@@ -216,19 +220,19 @@ function login() {
 function load() {
     clearInterval(qTimer); 
     timeLeft = 12;
-    document.getElementById("nextBtn").disabled = true; // Disable initially
+    document.getElementById("nextBtn").disabled = true;
     updateTimer();
     
     let q = rawQuiz[i];
     document.getElementById("qno").innerText = `Question ${i+1} / ${rawQuiz.length}`;
     document.getElementById("question").innerText = q.q;
-    document.getElementById("options").innerHTML = q.o.map(x => `<label><input type="radio" name="opt" value="${x}"> ${x}</label>`).join("");
+    document.getElementById("options").innerHTML = q.o.map(x => `<label class="option-label"><input type="radio" name="opt" value="${x}"> ${x}</label>`).join("");
     
     qTimer = setInterval(() => {
         timeLeft--; 
         updateTimer();
         if(timeLeft <= 4) {
-            document.getElementById("nextBtn").disabled = false; // Enable at last 4 seconds
+            document.getElementById("nextBtn").disabled = false;
         }
         if(timeLeft <= 0) next();
     }, 1000);
@@ -272,12 +276,11 @@ function showResult() {
     document.getElementById("loading").classList.add("hidden");
     document.getElementById("result").classList.remove("hidden");
     
-    // Updated Color Logic based on specific mark ranges
-    let color = "#d93025"; // Red default (< 5)
+    let color = "#d93025"; 
     if (score > 10) {
-        color = "#1e8e3e"; // Green (> 10)
+        color = "#1e8e3e"; 
     } else if (score > 5) {
-        color = "#f29900"; // Orange (> 5 and < 11)
+        color = "#f29900"; 
     }
 
     let emojis = (tabWarnings > 2) ? ["🚫", "❌"] : (score > 10 ? ["🏆", "🔥", "👑"] : (score > 5 ? ["👍", "😊", "✨"] : ["😢", "❌"]));
