@@ -10,17 +10,15 @@
         
         input, button, textarea, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
         
-        /* Main Button Style */
         button { background: #0077ff; color: #fff; border: none; cursor: pointer; font-weight: bold; transition: 0.3s; }
-        button:hover { background: #0056b3; }
+        button:hover:not(:disabled) { background: #0056b3; }
 
         /* Disabled Button Style (Gray) */
-        button:disabled { background: #cccccc; cursor: not-allowed; transform: none; }
+        button:disabled { background: #cccccc; cursor: not-allowed; transform: none; opacity: 0.6; }
         
         #loginError { color: #d93025; font-size: 0.85em; margin: 10px 0; font-weight: bold; min-height: 1.2em; text-align: center; }
         .hidden { display: none; }
 
-        /* Animations */
         #timerDisplay { font-size: 22px; color: #d93025; font-weight: bold; margin-bottom: 15px; animation: pulse 1s infinite; }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
         
@@ -58,7 +56,7 @@
         <h3 id="qno"></h3>
         <p id="question"></p>
         <div id="options"></div>
-        <button onclick="next()">தொடரும்🪷</button>
+        <button id="nextBtn" onclick="next()" disabled>தொடரும்🪷</button>
     </div>
 
     <div id="feedback" class="hidden">
@@ -67,8 +65,11 @@
         
         <select id="siteFb" oninput="checkFeedback()">
             <option value="">Rate the Website</option>
-            <option value="5">5 - nov mass na ne..(Excellent)</option><option value="4">4 -nala than iruku(good)</option>
-            <option value="3">3 - paravala(Average)</option><option value="2">2 -solara alavuku onnum illa(Fair)</option><option value="1">1 - chapa matter hu salt water hu (bad)</option>
+            <option value="5">5 - nov mass na ne..(Excellent)</option>
+            <option value="4">4 -nala than iruku(good)</option>
+            <option value="3">3 - paravala(Average)</option>
+            <option value="2">2 -solara alavuku onnum illa(Fair)</option>
+            <option value="1">1 - chapa matter hu salt water hu (bad)</option>
         </select>
         <textarea id="qFb" placeholder="manasula pathatha soluga.." oninput="checkFeedback()"></textarea>
         <textarea id="comment" placeholder="nega solvathu ellam unmai unmaiya thaivara vera onnum illa.." oninput="checkFeedback()"></textarea>
@@ -77,14 +78,15 @@
     </div>
 
     <div id="loading" class="hidden">
-        <img src="image-removebg-preview (2).png" alt="Loading..." class="loading-img"><h2>அமைதி அமைதி அமைதியோ அமைதி🤫"</h2>
+        <img src="image-removebg-preview (2).png" alt="Loading..." class="loading-img">
+        <h2>அமைதி அமைதி அமைதியோ அமைதி🤫</h2>
         <h2>Calculating Result...</h2>
         <h1 id="countdown" style="font-size: 80px; color: #0077ff;">3</h1>
     </div>
 
     <div id="result" class="hidden">
         <h2>namba than yapavume namba than!!🤣(Completed Successfully)</h2>
-        <div id="res" style="font-size: 1.8em; margin: 20px 0;"></div>
+        <div id="res" style="font-size: 1.8em; margin: 20px 0; font-weight: bold;"></div>
         <p> super ji..</p>
     </div>
 </div>
@@ -134,7 +136,6 @@ let rawQuiz = [
 
 let i = 0, score = 0, roll, name, dob, qTimer, timeLeft = 12, tabWarnings = 0, isQuizActive = false;
 
-// VALIDATION FUNCTIONS
 function validateRoll() {
     const r = document.getElementById("roll").value;
     const n = document.getElementById("name");
@@ -162,14 +163,11 @@ function validateDOB() {
     else e.innerText = "✅ ohh my god!! 😱 DOB Valid";
 }
 
-// CHECK FEEDBACK PROGRESS
 function checkFeedback() {
     const sFb = document.getElementById("siteFb").value;
     const qFb = document.getElementById("qFb").value.trim();
     const comm = document.getElementById("comment").value.trim();
     const btn = document.getElementById("finishBtn");
-
-    // Enable button only if all 3 fields are filled
     if (sFb !== "" && qFb !== "" && comm !== "") {
         btn.disabled = false;
     } else {
@@ -177,7 +175,6 @@ function checkFeedback() {
     }
 }
 
-// ANTI-CHEAT
 document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === 'hidden' && isQuizActive) {
         tabWarnings++;
@@ -217,20 +214,29 @@ function login() {
 }
 
 function load() {
-    clearInterval(qTimer); timeLeft = 12;
+    clearInterval(qTimer); 
+    timeLeft = 12;
+    document.getElementById("nextBtn").disabled = true; // Disable initially
     updateTimer();
+    
     let q = rawQuiz[i];
     document.getElementById("qno").innerText = `Question ${i+1} / ${rawQuiz.length}`;
     document.getElementById("question").innerText = q.q;
     document.getElementById("options").innerHTML = q.o.map(x => `<label><input type="radio" name="opt" value="${x}"> ${x}</label>`).join("");
     
     qTimer = setInterval(() => {
-        timeLeft--; updateTimer();
+        timeLeft--; 
+        updateTimer();
+        if(timeLeft <= 4) {
+            document.getElementById("nextBtn").disabled = false; // Enable at last 4 seconds
+        }
         if(timeLeft <= 0) next();
     }, 1000);
 }
 
-function updateTimer() { document.getElementById("timerDisplay").innerText = `Time Left: ${timeLeft}s`; }
+function updateTimer() { 
+    document.getElementById("timerDisplay").innerText = `Time Left: ${timeLeft}s`; 
+}
 
 function next() {
     let sel = document.querySelector("input[name=opt]:checked");
@@ -256,7 +262,8 @@ function submitAll() {
     
     let lt = 3;
     const li = setInterval(() => {
-        lt--; document.getElementById("countdown").innerText = lt;
+        lt--; 
+        document.getElementById("countdown").innerText = lt;
         if(lt <= 0) { clearInterval(li); showResult(); }
     }, 1000);
 }
@@ -264,8 +271,16 @@ function submitAll() {
 function showResult() {
     document.getElementById("loading").classList.add("hidden");
     document.getElementById("result").classList.remove("hidden");
-    let color = (tabWarnings > 2) ? "#d93025" : (score >= 13 ? "#1e8e3e" : (score >= 8 ? "#f29900" : "#d93025"));
-    let emojis = (tabWarnings > 2) ? ["🚫", "❌"] : (score >= 13 ? ["🏆", "🔥", "👑"] : (score >= 8 ? ["👍", "😊", "✨"] : ["😢", "❌"]));
+    
+    // Updated Color Logic based on specific mark ranges
+    let color = "#d93025"; // Red default (< 5)
+    if (score > 10) {
+        color = "#1e8e3e"; // Green (> 10)
+    } else if (score > 5) {
+        color = "#f29900"; // Orange (> 5 and < 11)
+    }
+
+    let emojis = (tabWarnings > 2) ? ["🚫", "❌"] : (score > 10 ? ["🏆", "🔥", "👑"] : (score > 5 ? ["👍", "😊", "✨"] : ["😢", "❌"]));
     
     const r = document.getElementById("res");
     r.style.color = color;
